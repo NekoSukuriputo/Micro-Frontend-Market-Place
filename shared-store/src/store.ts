@@ -55,3 +55,26 @@ export const login = (username: string) => {
 export const logout = () => {
   userStore.setState({ user: null });
 };
+
+export const shopStore = new Store({ favorites: [], discount: 0, activeCoupon: null });
+
+export const toggleFavorite = (productId: number) => {
+  const currentFavs = shopStore.getState().favorites;
+  if (currentFavs.includes(productId)) {
+    shopStore.setState({ favorites: currentFavs.filter((id: number) => id !== productId) });
+  } else {
+    shopStore.setState({ favorites: [...currentFavs, productId] });
+  }
+};
+
+export const applyDiscount = (code: string) => {
+  if (code === 'NEKO2026') {
+    shopStore.setState({ discount: 0.2, activeCoupon: code }); // 20% discount
+    return true;
+  }
+  return false;
+};
+
+export const clearDiscount = () => {
+  shopStore.setState({ discount: 0, activeCoupon: null });
+};
