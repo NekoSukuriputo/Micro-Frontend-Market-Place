@@ -2,9 +2,19 @@
 
 [![EN](https://img.shields.io/badge/Language-English-blue)](README.md)
 
-Proyek ini adalah implementasi tingkat lanjut dari arsitektur **Micro Frontend (MFE)** untuk aplikasi E-Commerce. Proyek ini mendemonstrasikan integrasi yang mulus dari empat framework frontend yang sangat populer (**React, Vue, Svelte, dan Angular**) ke dalam satu antarmuka pengguna yang terpadu.
+Proyek ini adalah implementasi tingkat lanjut kelas enterprise dari arsitektur **Micro Frontend (MFE)** untuk aplikasi E-Commerce modern. Proyek ini mendemonstrasikan integrasi yang mulus dari empat framework frontend yang sangat populer dan berbeda secara fundamental (**React, Vue, Svelte, dan Angular**) ke dalam satu antarmuka pengguna yang terpadu.
 
 Komunikasi antar-aplikasi dan sinkronisasi *state* di berbagai framework yang berbeda ini ditangani melalui *shared store* **Vanilla JS Pub/Sub** kustom, yang sepenuhnya independen dari framework mana pun. Seluruh ekosistem di-styling menggunakan rilis terbaru **Tailwind CSS v4**.
+
+---
+
+## 📑 Daftar Isi
+- [🛠️ Teknologi yang Digunakan](#️-teknologi-yang-digunakan)
+- [🏗️ Rincian Arsitektur & Struktur Folder](#-rincian-arsitektur--struktur-folder)
+- [🔄 Alur Komunikasi Antar-Framework](#-alur-komunikasi-antar-framework)
+- [🌉 Arsitektur Local-Global State Bridge](#-arsitektur-local-global-state-bridge)
+- [🚀 Production Deployment](#-production-deployment)
+- [💻 Local Development](#-local-development)
 
 ---
 
@@ -15,33 +25,40 @@ Komunikasi antar-aplikasi dan sinkronisasi *state* di berbagai framework yang be
 *   **Build Engines**: 
     *   **Rspack**: Digunakan untuk React, Vue, Svelte, dan Vanilla JS untuk kompilasi berbasis Rust yang super cepat.
     *   **Webpack**: Digunakan untuk Angular (via `@angular-architects/module-federation`) karena kebutuhan kompatibilitas ketat ekosistem Angular.
-*   **Micro Frontend Integration**: **Module Federation** (kompatibel lintas Webpack dan Rspack) memungkinkan pemuatan dinamis aplikasi *remote* saat *runtime*.
+*   **Micro Frontend Integration**: **Module Federation** (kompatibel lintas Webpack dan Rspack) memungkinkan pemuatan dinamis aplikasi *remote* saat *runtime*. Ini memungkinkan sebuah aplikasi JavaScript mengambil dan menjalankan kode dari aplikasi lain secara dinamis.
 *   **Styling**: **Tailwind CSS v4**, menggunakan sintaks modern `@tailwindcss/postcss` dan native CSS `@import "tailwindcss";`.
 *   **State Management**: Vanilla JavaScript yang framework-agnostic (Pola Publisher/Subscriber).
 
 ### Infrastruktur & DevOps
-*   **Containerization**: **Docker** menggunakan *multi-stage builds* (Node.js untuk kompilasi, Nginx untuk menyajikan aset statis).
+*   **Containerization**: **Docker** menggunakan *multi-stage builds* yang teroptimasi (Node.js untuk kompilasi, Nginx untuk menyajikan aset statis).
 *   **Web Server**: **Nginx** (Alpine) yang dikonfigurasi dengan routing SPA dan *header* `Cache-Control` yang ketat untuk titik masuk (entry points) MFE.
-*   **Continuous Integration (CI)**: Pipeline **Jenkins** untuk melakukan proses *build*, *containerize*, dan *push image* secara otomatis ke Docker Registry privat.
-*   **Continuous Deployment (CD)**: **ArgoCD** yang beroperasi berdasarkan prinsip-prinsip GitOps.
-*   **Orchestration**: **Kubernetes** untuk penskalaan dan manajemen pod Nginx.
-*   **CDN & Edge Cache**: Diproksi melalui **Cloudflare**.
 
 ---
 
-## 🏗️ Rincian Arsitektur
+## 🏗️ Rincian Arsitektur & Struktur Folder
 
-Aplikasi dipecah menjadi 6 repositori/folder terpisah yang *decoupled*, berkomunikasi secara dinamis melalui jaringan:
+Aplikasi dipecah menjadi 6 repositori/folder terpisah yang *decoupled*, berkomunikasi secara dinamis melalui jaringan. Setiap folder bertindak sebagai aplikasi mandiri.
 
+```text
+📦 microFE (Root)
+ ┣ 📂 host                 # (React) App Shell & Navigasi
+ ┣ 📂 shared-store         # (Vanilla JS) Manajer State Global
+ ┣ 📂 remote-product       # (React) Halaman Daftar Produk
+ ┣ 📂 remote-detail-cart   # (Vue 3) Halaman Keranjang Belanja
+ ┣ 📂 remote-checkout      # (Svelte) Halaman Form Checkout
+ ┗ 📂 remote-user          # (Angular) Halaman Profil & Wishlist
+```
+
+### Peran Detail Setiap Komponen:
 1. **`host` (React - Port 3000)**
-   *   Bertindak sebagai "App Shell" atau Container.
+   *   Bertindak sebagai "App Shell" atau Container utama.
    *   Menyediakan Navigation Bar utama (React) dan menangani routing tingkat atas (`react-router-dom`).
    *   Memanfaatkan komponen *wrapper* generik `<MicroFrontend />` untuk melakukan *mount* aplikasi non-React (Vue, Svelte, Angular) dengan aman ke dalam DOM.
 
 2. **`shared-store` (Vanilla JS - Port 3001)**
    *   Manajer *state* global yang tidak memiliki dependensi framework.
-   *   Menyimpan *state* untuk `cartItems` dan `user`.
-   *   Diekspos sebagai *remote module* sehingga Vue dapat menambahkan produk, dan React Navbar dapat langsung merespons perubahan.
+   *   Menyimpan *state* global untuk `cartItems`, `user`, `favorites`, dan `discount`.
+   *   Diekspos sebagai *remote module* sehingga Vue dapat menambahkan produk, React dapat mem-favoritkan barang, dan React Navbar dapat langsung merespons perubahan secara *real-time*.
 
 3. **`remote-product` (React - Port 3002)**
    *   Merender halaman **Product List**.
@@ -57,14 +74,14 @@ Aplikasi dipecah menjadi 6 repositori/folder terpisah yang *decoupled*, berkomun
    *   Mengekspor fungsi `mount()` generik untuk mengkompilasi dan menempelkan aplikasi Svelte ke dalam HTML `div` yang disediakan oleh Host.
 
 6. **`remote-user` (Angular 17 - Port 3005)**
-   *   Merender halaman **User Profile & Login**.
+   *   Merender halaman **User Profile & Wishlist**.
    *   Mengekspor fungsi `mount()` menggunakan API `bootstrapApplication` dari Angular agar dapat dirender secara independen di dalam Host.
 
 ---
 
 ## 🔄 Alur Komunikasi Antar-Framework
 
-Meskipun menggunakan empat mesin reaktivitas yang sama sekali berbeda, *state* tetap tersinkronisasi sempurna secara *real-time* di seluruh micro frontend. Hal ini dicapai melalui pola Vanilla JS Pub/Sub:
+Meskipun menggunakan empat mesin reaktivitas yang sama sekali berbeda (Virtual DOM React, Composition API Vue, Svelte Compiler, Zone.js/Signals Angular), *state* tetap tersinkronisasi sempurna secara *real-time* di seluruh micro frontend. Hal ini dicapai melalui pola Vanilla JS Pub/Sub:
 
 1. **Inisialisasi**: Navbar milik Host (React) memanggil `cartStore.subscribe(callback)` pada saat *mounting*.
 2. **Aksi**: Ketika pengguna membuka **Product List (React)** dan mengklik "Add to Cart", aplikasi mengeksekusi `addToCart(product)` yang diimpor dari `shared-store`.

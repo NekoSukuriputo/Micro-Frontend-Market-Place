@@ -2,9 +2,19 @@
 
 [![ID](https://img.shields.io/badge/Language-Indonesian-red)](README-id.md) 
 
-This project is an advanced implementation of a **Micro Frontend (MFE)** architecture for an E-Commerce application. It demonstrates the seamless integration of four highly popular frontend frameworks (**React, Vue, Svelte, and Angular**) within a single unified user interface. 
+This project is an advanced, enterprise-grade implementation of a **Micro Frontend (MFE)** architecture for a modern E-Commerce application. It demonstrates the seamless integration of four highly popular, fundamentally different frontend frameworks (**React, Vue, Svelte, and Angular**) within a single unified user interface. 
 
 Inter-application communication and state synchronization across these disparate frameworks are handled via a custom **Vanilla JS Pub/Sub shared store**, completely decoupled from any specific framework. The entire ecosystem is styled using the newly released **Tailwind CSS v4**.
+
+---
+
+## 📑 Table of Contents
+- [🛠️ Technologies Used](#-technologies-used)
+- [🏗️ Architecture Breakdown & Folder Structure](#-architecture-breakdown--folder-structure)
+- [🔄 Cross-Framework Communication Flow](#-cross-framework-communication-flow)
+- [🌉 Local-Global State Bridge Architecture](#-local-global-state-bridge-architecture)
+- [🚀 Production Deployment](#-production-deployment)
+- [💻 Local Development](#-local-development)
 
 ---
 
@@ -15,24 +25,31 @@ Inter-application communication and state synchronization across these disparate
 *   **Build Engines**: 
     *   **Rspack**: Used for React, Vue, Svelte, and Vanilla JS for blazing-fast Rust-based compilation.
     *   **Webpack**: Used for Angular (via `@angular-architects/module-federation`) due to strict Angular ecosystem compatibility requirements.
-*   **Micro Frontend Integration**: **Module Federation** (compatible across both Webpack and Rspack) allows dynamic loading of remote applications at runtime.
+*   **Micro Frontend Integration**: **Module Federation** (compatible across both Webpack and Rspack) allows dynamic loading of remote applications at runtime. It essentially allows JavaScript applications to dynamically load code from another application.
 *   **Styling**: **Tailwind CSS v4**, utilizing the modern `@tailwindcss/postcss` and native CSS `@import "tailwindcss";` syntax.
 *   **State Management**: Framework-agnostic Vanilla JavaScript (Publisher/Subscriber pattern).
 
 ### Infrastructure & DevOps
-*   **Containerization**: **Docker** utilizing multi-stage builds (Node.js for compilation, Nginx for serving static assets).
+*   **Containerization**: **Docker** utilizing optimized multi-stage builds (Node.js for compilation, Nginx for serving static assets).
 *   **Web Server**: **Nginx** (Alpine) configured with SPA routing and strict `Cache-Control` headers for MFE entry points.
-*   **Continuous Integration (CI)**: **Jenkins** pipelines to automatically build, containerize, and push images to a private Docker registry.
-*   **Continuous Deployment (CD)**: **ArgoCD** operating on GitOps principles.
-*   **Orchestration**: **Kubernetes** for scaling and managing the Nginx pods.
-*   **CDN & Edge Cache**: Proxied through **Cloudflare**.
 
 ---
 
-## 🏗️ Architecture Breakdown
+## 🏗️ Architecture Breakdown & Folder Structure
 
-The application is decomposed into 6 decoupled repositories/folders, communicating dynamically over the network:
+The application is decomposed into 6 decoupled repositories/folders, communicating dynamically over the network. Each folder acts as its own standalone application.
 
+```text
+📦 microFE (Root)
+ ┣ 📂 host                 # (React) App Shell & Navigation
+ ┣ 📂 shared-store         # (Vanilla JS) Global State Manager
+ ┣ 📂 remote-product       # (React) Product List Page
+ ┣ 📂 remote-detail-cart   # (Vue 3) Shopping Cart Page
+ ┣ 📂 remote-checkout      # (Svelte) Checkout Form Page
+ ┗ 📂 remote-user          # (Angular) User Profile & Wishlist Page
+```
+
+### Detailed Component Roles:
 1. **`host` (React - Port 3000)**
    *   Acts as the "App Shell" or Container.
    *   Provides the main Navigation Bar (React) and handles top-level routing (`react-router-dom`).
@@ -40,8 +57,8 @@ The application is decomposed into 6 decoupled repositories/folders, communicati
 
 2. **`shared-store` (Vanilla JS - Port 3001)**
    *   The global state manager that contains no framework dependencies.
-   *   Holds the state for `cartItems` and `user`.
-   *   Exposed as a remote module so Vue can add products, and the React Navbar can instantly react to changes.
+   *   Holds the global state for `cartItems`, `user`, `favorites`, and `discount`.
+   *   Exposed as a remote module so Vue can add products, React can toggle favorites, and the React Navbar can instantly react to changes.
 
 3. **`remote-product` (React - Port 3002)**
    *   Renders the **Product List** page.
@@ -57,14 +74,14 @@ The application is decomposed into 6 decoupled repositories/folders, communicati
    *   Exports a generic `mount()` function to compile and attach the Svelte app into an HTML `div` provided by the Host.
 
 6. **`remote-user` (Angular 17 - Port 3005)**
-   *   Renders the **User Profile & Login** page.
+   *   Renders the **User Profile & Wishlist** page.
    *   Exports a generic `mount()` function utilizing Angular's `bootstrapApplication` API to render independently within the Host.
 
 ---
 
 ## 🔄 Cross-Framework Communication Flow
 
-Despite utilizing four entirely different reactivity engines, state remains perfectly synchronized in real-time across all micro frontends. This is achieved through the Vanilla JS Pub/Sub pattern:
+Despite utilizing four entirely different reactivity engines (React's Virtual DOM, Vue's Composition API, Svelte's Compiler, Angular's Zone.js/Signals), state remains perfectly synchronized in real-time across all micro frontends. This is achieved through the Vanilla JS Pub/Sub pattern:
 
 1. **Initialization**: The Host's Navbar (React) calls `cartStore.subscribe(callback)` upon mounting.
 2. **Action**: When a user navigates to the **Product List (React)** and clicks "Add to Cart", it executes `addToCart(product)` imported from `shared-store`.
