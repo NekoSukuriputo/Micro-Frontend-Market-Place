@@ -14,7 +14,14 @@ COPY --from=builder /app/dist/remote-user /usr/share/nginx/html
 
 RUN echo -e 'server {\n\
     listen 80;\n\
-    location / {\n\
+    location ~* ^/(mf-manifest\\.json|remoteEntry\\.js)$ {\\n\\
+        root /usr/share/nginx/html;\\n\\
+        add_header Cache-Control "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0";\\n\\
+        add_header Access-Control-Allow-Origin *;\\n\\
+        add_header Access-Control-Allow-Methods "GET, OPTIONS";\\n\\
+        add_header Access-Control-Allow-Headers "*";\\n\\
+    }\\n\\
+    location / {\\n\\
         root /usr/share/nginx/html;\n\
         index index.html index.htm;\n\
         try_files $uri $uri/ /index.html;\n\

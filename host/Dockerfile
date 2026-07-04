@@ -20,6 +20,10 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 # Copy custom nginx.conf untuk menangani routing SPA (Single Page Application)
 RUN echo -e 'server {\n\
     listen 80;\n\
+    location ~* ^/(index\.html)$ {\n\
+        root /usr/share/nginx/html;\n\
+        add_header Cache-Control "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0";\n\
+    }\n\
     location / {\n\
         root /usr/share/nginx/html;\n\
         index index.html index.htm;\n\
