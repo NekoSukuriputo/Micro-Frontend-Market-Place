@@ -45,8 +45,9 @@
 
         <div class="flex justify-between items-center mt-4 pt-4 border-t border-gray-200">
           <div class="flex flex-col">
-            <span v-if="cartStore.discount > 0" class="text-sm text-gray-500 line-through">Subtotal: ${{ subtotal }}</span>
-            <span class="text-xl font-bold text-gray-900">Total: ${{ total }}</span>
+            <span v-if="cartStore.discount > 0" class="text-sm text-gray-500 line-through">Subtotal: ${{ subtotal.toFixed(2) }}</span>
+            <span v-if="cartStore.discount > 0" class="text-sm text-green-600 font-medium mb-1">Discount: -${{ (subtotal * cartStore.discount).toFixed(2) }}</span>
+            <span class="text-xl font-bold text-gray-900">Total: ${{ total.toFixed(2) }}</span>
           </div>
           <button @click="goToCheckout" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors">
             Proceed to Checkout

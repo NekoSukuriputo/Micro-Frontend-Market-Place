@@ -74,6 +74,30 @@ Despite utilizing four entirely different reactivity engines, state remains perf
 
 ---
 
+## 🌉 Local-Global State Bridge Architecture
+
+To demonstrate an advanced, enterprise-grade state architecture, this project utilizes a **Local-Global State Bridge**. Instead of having every UI component subscribe directly to the global Vanilla JS store (which can cause performance bottlenecks and tight coupling), each micro frontend utilizes its own native state manager to handle local UI state and acts as a "bridge" to the global store:
+
+1. **React (`remote-product`) + Zustand 🐻**
+   *   Uses Zustand to locally manage the search bar input and sorting dropdown (preventing unnecessary global re-renders).
+   *   Zustand subscribes to the global `shopStore`. When a user clicks the ❤️ (Favorite) on a product, Zustand updates the global store. The global store then syncs the updated wishlist back to Zustand, which updates the React UI.
+
+2. **Vue 3 (`remote-detail-cart`) + Pinia 🍍**
+   *   Uses Pinia to manage the Coupon Code input field and its "validating" loading state locally.
+   *   Pinia reads the global `cartItems` and `discount` state. When a coupon is successfully applied locally, Pinia dispatches an action to the global store to update the discount across all apps.
+
+3. **Svelte (`remote-checkout`) + Svelte Stores 🍊**
+   *   Uses a Svelte Writable Store to manage the Checkout Form (Name, Address, Payment Method) purely locally.
+   *   The local Svelte store subscribes to the global cart and discount state, re-calculating the final checkout price (Subtotal - Discount) dynamically using Svelte's reactive `$store` syntax.
+
+4. **Angular (`remote-user`) + RxJS 🅰️**
+   *   Uses an Angular Service with RxJS `BehaviorSubject` to manage the active UI tabs ("My Profile" vs "Favorites").
+   *   The service listens to the global `shopStore` and pipes the length of the favorites array into an Observable. When a user favorites an item in React, the Angular UI updates instantly.
+
+This architecture proves that you can leverage the specific performance optimizations and developer experience of each framework (Zustand, Pinia, Svelte Stores) while maintaining a single source of truth for critical business data via Module Federation.
+
+---
+
 ## 🚀 Production Deployment
 
 Since each Micro Frontend contains its own `Dockerfile` utilizing an optimized multi-stage build (Node.js for compilation -> Nginx for serving), deploying the entire ecosystem is highly flexible.

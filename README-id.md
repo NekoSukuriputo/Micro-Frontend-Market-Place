@@ -74,6 +74,30 @@ Meskipun menggunakan empat mesin reaktivitas yang sama sekali berbeda, *state* t
 
 ---
 
+## 🌉 Arsitektur Local-Global State Bridge
+
+Untuk mendemonstrasikan arsitektur *state* tingkat lanjut kelas *enterprise*, proyek ini menggunakan **Local-Global State Bridge**. Daripada membuat setiap komponen UI melakukan *subscribe* langsung ke *Global Store* Vanilla JS (yang berpotensi menyebabkan masalah performa dan *tight coupling*), setiap micro frontend memanfaatkan *state manager* aslinya (native) untuk menangani *state* UI lokal, sekaligus bertindak sebagai "jembatan" ke *Global Store*:
+
+1. **React (`remote-product`) + Zustand 🐻**
+   *   Menggunakan Zustand untuk mengelola *input* pencarian (search) dan *dropdown* pengurutan (sort) secara lokal (mencegah *re-render* global yang tidak perlu).
+   *   Zustand melakukan *subscribe* ke `shopStore` global. Saat pengguna mengklik ❤️ (Favorit) pada sebuah produk, Zustand memperbarui *global store*. Kemudian, *global store* menyinkronkan *wishlist* terbaru kembali ke Zustand, yang secara otomatis memperbarui UI React.
+
+2. **Vue 3 (`remote-detail-cart`) + Pinia 🍍**
+   *   Menggunakan Pinia untuk mengelola *field input* Kode Kupon dan status *loading* "validasi" secara lokal.
+   *   Pinia membaca *state* `cartItems` dan `discount` dari global. Saat kupon berhasil diaplikasikan secara lokal, Pinia mengirimkan aksi ke *global store* untuk memperbarui diskon di seluruh aplikasi.
+
+3. **Svelte (`remote-checkout`) + Svelte Stores 🍊**
+   *   Menggunakan Svelte Writable Store untuk mengelola Form Checkout (Nama, Alamat, Metode Pembayaran) murni secara lokal.
+   *   Svelte store lokal ini melakukan *subscribe* ke *state* keranjang dan diskon global, lalu menghitung ulang harga akhir (*Subtotal - Discount*) secara dinamis menggunakan sintaks reaktif `$store` bawaan Svelte.
+
+4. **Angular (`remote-user`) + RxJS 🅰️**
+   *   Menggunakan *Angular Service* dengan RxJS `BehaviorSubject` untuk mengelola tab UI aktif ("My Profile" vs "Favorites").
+   *   *Service* ini mendengarkan `shopStore` global dan menyalurkan (pipe) panjang *array favorites* ke dalam sebuah Observable. Ketika pengguna menyukai produk di React, UI Angular akan diperbarui secara instan.
+
+Arsitektur ini membuktikan bahwa Anda dapat memanfaatkan optimalisasi performa dan pengalaman developer (*DX*) spesifik dari setiap framework (Zustand, Pinia, Svelte Stores) sembari mempertahankan satu sumber kebenaran (*single source of truth*) untuk data bisnis kritikal melalui Module Federation.
+
+---
+
 ## 🚀 Production Deployment
 
 Karena setiap Micro Frontend memiliki `Dockerfile`-nya sendiri yang menggunakan *multi-stage build* teroptimasi (Node.js untuk kompilasi -> Nginx untuk *serving* statis), *deployment* untuk seluruh ekosistem ini sangatlah fleksibel.
