@@ -19,5 +19,6 @@ const config = withModuleFederationPlugin({
 
 config.output.library = { type: 'var', name: 'remote_user' };
 config.output.scriptType = 'text/javascript';
+config.output.publicPath = "auto";
 
 module.exports = config;

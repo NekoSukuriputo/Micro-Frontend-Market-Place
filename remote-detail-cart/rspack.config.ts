@@ -33,7 +33,7 @@ export default defineConfig({
     // You need to set a unique value that is not equal to other applications
     uniqueName: "remote_detail_cart",
     // publicPath must be configured if using manifest
-    publicPath: "http://localhost:3003/",
+    publicPath: isDev ? "http://localhost:3003/" : "auto",
     crossOriginLoading: "anonymous",
   },
 

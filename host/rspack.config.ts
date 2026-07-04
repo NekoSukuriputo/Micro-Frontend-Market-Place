@@ -33,7 +33,7 @@ export default defineConfig({
     // You need to set a unique value that is not equal to other applications
     uniqueName: "host",
     // publicPath must be configured if using manifest
-    publicPath: "http://localhost:3000/",
+    publicPath: isDev ? "http://localhost:3000/" : "/",
     crossOriginLoading: "anonymous",
   },
 

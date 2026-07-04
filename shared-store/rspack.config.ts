@@ -32,7 +32,7 @@ export default defineConfig({
     // You need to set a unique value that is not equal to other applications
     uniqueName: "shared_store",
     // publicPath must be configured if using manifest
-    publicPath: "http://localhost:3001/",
+    publicPath: isDev ? "http://localhost:3001/" : "auto",
     crossOriginLoading: "anonymous",
   },
 

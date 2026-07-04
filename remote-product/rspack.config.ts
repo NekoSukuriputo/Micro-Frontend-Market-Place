@@ -33,7 +33,7 @@ export default defineConfig({
     // You need to set a unique value that is not equal to other applications
     uniqueName: "remote_product",
     // publicPath must be configured if using manifest
-    publicPath: "http://localhost:3002/",
+    publicPath: isDev ? "http://localhost:3002/" : "auto",
     crossOriginLoading: "anonymous",
   },
 
